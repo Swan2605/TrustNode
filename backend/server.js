@@ -16,15 +16,38 @@ const app = express();
 const server = http.createServer(app);
 
 const DEFAULT_FRONTEND_ORIGIN = 'https://trustnode117-2m38g664p-suhani-jaiswals-projects.vercel.app';
-const configuredFrontendOrigin = String(process.env.FRONTEND_URL || '').trim();
-const allowedOrigins = [...new Set([
-  DEFAULT_FRONTEND_ORIGIN,
-  configuredFrontendOrigin
-].filter(Boolean))];
+const VERCEL_PREVIEW_ORIGIN_PATTERN = /^https:\/\/trustnode117-[a-z0-9-]+-suhani-jaiswals-projects\.vercel\.app$/i;
 
-app.use(cors({
+const normalizeOrigin = (origin = '') => String(origin || '').trim().replace(/\/+$/, '');
+
+const configuredOrigins = String(process.env.FRONTEND_URLS || '')
+  .split(',')
+  .map((origin) => normalizeOrigin(origin))
+  .filter(Boolean);
+
+const singleFrontendOrigin = normalizeOrigin(process.env.FRONTEND_URL || '');
+if (singleFrontendOrigin) {
+  configuredOrigins.push(singleFrontendOrigin);
+}
+
+const allowedOrigins = new Set(
+  [DEFAULT_FRONTEND_ORIGIN, ...configuredOrigins]
+    .map((origin) => normalizeOrigin(origin))
+    .filter(Boolean)
+);
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true; // Non-browser clients / server-to-server calls
+
+  const normalized = normalizeOrigin(origin);
+  if (allowedOrigins.has(normalized)) return true;
+  if (VERCEL_PREVIEW_ORIGIN_PATTERN.test(normalized)) return true;
+  return false;
+};
+
+const corsOptions = {
   origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (isAllowedOrigin(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -33,11 +56,20 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
-}));
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin(origin, callback) {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ['GET', 'POST'],
     credentials: true
   }
