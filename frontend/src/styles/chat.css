@@ -21,7 +21,7 @@
   padding: 1.5rem 1rem;
   margin: 0;
   font-size: 1.5rem;
-  color: #7d4cff;
+  color: #1e7ae0;
   border-bottom: 1px solid rgba(125, 76, 255, 0.1);
 }
 
@@ -43,7 +43,7 @@
 
 .search-input:focus {
   outline: none;
-  border-color: #7d4cff;
+  border-color: #1e7ae0;
   background: rgba(125, 76, 255, 0.2);
   box-shadow: 0 0 0 3px rgba(125, 76, 255, 0.1);
 }
@@ -86,7 +86,7 @@
   height: 44px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #7d4cff;
+  border: 2px solid #1e7ae0;
 }
 
 .conversations-list {
@@ -119,7 +119,7 @@
 
 .conversation-item.active {
   background: rgba(125, 76, 255, 0.25);
-  border-left: 3px solid #7d4cff;
+  border-left: 3px solid #1e7ae0;
 }
 
 .conversation-info {
@@ -148,7 +148,7 @@
   position: absolute;
   top: 8px;
   right: 8px;
-  background: #7d4cff;
+  background: #1e7ae0;
   color: #fff;
   border-radius: 50%;
   width: 24px;
@@ -198,7 +198,7 @@
   border: 1px solid rgba(125, 76, 255, 0.4);
   border-radius: 20px;
   font-size: 0.85rem;
-  color: #7d4cff;
+  color: #1e7ae0;
 }
 
 .messages-container {
@@ -248,7 +248,7 @@
 }
 
 .message.sent .message-bubble {
-  background: linear-gradient(135deg, #7d4cff 0%, #5a2f8f 100%);
+  background: linear-gradient(135deg, #1e7ae0 0%, #0052a3 100%);
   border-bottom-right-radius: 4px;
 }
 
@@ -292,7 +292,7 @@
 
 .message-input:focus {
   outline: none;
-  border-color: #7d4cff;
+  border-color: #1e7ae0;
   background: rgba(125, 76, 255, 0.15);
   box-shadow: 0 0 0 3px rgba(125, 76, 255, 0.1);
 }
@@ -308,7 +308,7 @@
 
 .send-button {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #7d4cff 0%, #5a2f8f 100%);
+  background: linear-gradient(135deg, #1e7ae0 0%, #0052a3 100%);
   border: none;
   border-radius: 20px;
   color: #fff;

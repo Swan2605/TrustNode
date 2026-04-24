@@ -6,20 +6,20 @@
   --bg-panel: rgba(12, 14, 35, 0.88);
   --bg-panel-strong: rgba(10, 10, 28, 0.96);
   --bg-panel-soft: rgba(255, 255, 255, 0.04);
-  --border-panel: rgba(99, 88, 255, 0.22);
+  --border-panel: rgba(30, 122, 224, 0.22);
   --text-primary: #eef2ff;
   --text-secondary: #9aa6ff;
   --text-muted: rgba(255,255,255,0.68);
-  --accent: #6d4cff;
+  --accent: #1e7ae0;
   --accent-soft: #4dd0ff;
-  --shadow-glow: 0 0 40px rgba(80, 60, 240, 0.18);
+  --shadow-glow: 0 0 40px rgba(30, 122, 224, 0.18);
   --shadow-dark: 0 28px 80px rgba(0, 0, 0, 0.55);
 }
 
 body {
   margin: 0;
   font-family: 'Segoe UI Variable', 'Inter', system-ui, sans-serif;
-  background: radial-gradient(circle at top left, rgba(100, 61, 255, 0.16), transparent 18%),
+  background: radial-gradient(circle at top left, rgba(30, 122, 224, 0.16), transparent 18%),
     radial-gradient(circle at 80% 20%, rgba(72, 215, 255, 0.12), transparent 18%),
     linear-gradient(180deg, #05050e 0%, #02020a 100%);
   min-height: 100vh;
@@ -32,7 +32,7 @@ body::before {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 20% 15%, rgba(108, 92, 255, 0.12), transparent 22%),
+  background: radial-gradient(circle at 20% 15%, rgba(30, 122, 224, 0.12), transparent 22%),
               radial-gradient(circle at 85% 70%, rgba(72, 210, 255, 0.1), transparent 20%);
   mix-blend-mode: screen;
 }
@@ -264,8 +264,8 @@ body::before {
 
 .nav-action.primary {
   color: #ffffff;
-  background: linear-gradient(135deg, #7d4cff, #4a2ae8);
-  box-shadow: 0 16px 32px rgba(79, 43, 200, 0.24);
+  background: linear-gradient(135deg, #1e7ae0, #0066cc);
+  box-shadow: 0 16px 32px rgba(30, 122, 224, 0.24);
 }
 
 .nav-action.primary:hover {
@@ -443,7 +443,7 @@ body::before {
 
 .request-accept-btn {
   border: 1px solid rgba(255, 255, 255, 0.14);
-  background: linear-gradient(135deg, #7d4cff, #4a2ae8);
+  background: linear-gradient(135deg, #1e7ae0, #0066cc);
   color: #ffffff;
   box-shadow: 0 10px 24px rgba(74, 42, 232, 0.32);
 }
@@ -537,7 +537,7 @@ body::before {
   place-items: center;
   font-weight: 800;
   color: #ffffff;
-  background: linear-gradient(135deg, #7d4cff, #4a2ae8);
+  background: linear-gradient(135deg, #1e7ae0, #0066cc);
 }
 
 .profile-menu-dropdown {
@@ -2492,7 +2492,7 @@ body::before {
   margin: 0 auto;
   border: 3px solid #f5f7ff;
   box-shadow: 0 10px 24px rgba(8, 14, 42, 0.38);
-  background: linear-gradient(135deg, #7d4cff, #4a2ae8);
+  background: linear-gradient(135deg, #1e7ae0, #0066cc);
   overflow: hidden;
   display: grid;
   place-items: center;
@@ -2648,7 +2648,7 @@ body::before {
 .profile-banner {
   height: 80px;
   border-radius: 18px;
-  background: linear-gradient(135deg, #7d4cff, #4a2ae8);
+  background: linear-gradient(135deg, #1e7ae0, #0066cc);
   margin: -1.2rem -1.3rem 1rem;
   background-size: cover;
   background-position: center;
@@ -4452,7 +4452,7 @@ body::before {
   font-size: 1.05rem;
   font-weight: 700;
   color: #ffffff;
-  background: linear-gradient(135deg, #7d4cff, #5b34d2);
+  background: linear-gradient(135deg, #1e7ae0, #0052a3);
 }
 
 .post-start-input {
@@ -4614,7 +4614,7 @@ body::before {
   border: none;
   border-radius: 999px;
   padding: 0.72rem 1.2rem;
-  background: linear-gradient(135deg, #7d4cff, #5b34d2);
+  background: linear-gradient(135deg, #1e7ae0, #0052a3);
   color: #ffffff;
   font-weight: 700;
   cursor: pointer;
@@ -4920,7 +4920,7 @@ body::before {
 }
 
 .post-action-active {
-  color: #6d4cff !important;
+  color: #1e7ae0 !important;
   background: rgba(109, 76, 255, 0.16) !important;
 }
 
@@ -5012,7 +5012,7 @@ body::before {
   border: none;
   border-radius: 999px;
   padding: 0.58rem 1rem;
-  background: linear-gradient(135deg, #6d4cff, #3fc6ff);
+  background: linear-gradient(135deg, #1e7ae0, #3fc6ff);
   color: #ffffff;
   font-weight: 700;
   cursor: pointer;
@@ -5246,7 +5246,7 @@ body::before {
 }
 
 .share-connection-item input[type='checkbox'] {
-  accent-color: #6d4cff;
+  accent-color: #1e7ae0;
   width: 18px;
   height: 18px;
   flex-shrink: 0;
@@ -5280,7 +5280,7 @@ body::before {
 }
 
 .share-send-btn {
-  background: linear-gradient(135deg, #7d4cff, #4a2ae8);
+  background: linear-gradient(135deg, #1e7ae0, #0066cc);
   color: #ffffff;
   box-shadow: 0 10px 24px rgba(74, 42, 232, 0.34);
 }
@@ -5444,7 +5444,7 @@ body::before {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7d4cff, #3fc6ff);
+  background: linear-gradient(135deg, #1e7ae0, #3fc6ff);
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -6460,7 +6460,7 @@ body::before {
 }
 
 .nav-action.primary {
-  background: linear-gradient(135deg, #7d4cff, #3fc6ff);
+  background: linear-gradient(135deg, #1e7ae0, #3fc6ff);
   color: #fff;
   box-shadow: 0 18px 34px rgba(66, 140, 255, 0.26);
 }
@@ -6659,7 +6659,7 @@ textarea::placeholder {
 }
 
 .mp-badge {
-  background: #6d4cff;
+  background: #1e7ae0;
 }
 
 .post-image {
@@ -6845,7 +6845,7 @@ textarea::placeholder {
 }
 
 .mp-unread-dot {
-  background: #6d4cff !important;
+  background: #1e7ae0 !important;
 }
 
 .mp-messages {
@@ -6884,7 +6884,7 @@ textarea::placeholder {
 }
 
 .mp-send-btn {
-  background: linear-gradient(135deg, #7d4cff, #3fc6ff) !important;
+  background: linear-gradient(135deg, #1e7ae0, #3fc6ff) !important;
   color: #fff !important;
 }
 
@@ -6943,7 +6943,7 @@ textarea::placeholder {
 }
 
 .mp-badge {
-  background: #6d4cff !important;
+  background: #1e7ae0 !important;
   border-color: rgba(255, 255, 255, 0.18) !important;
 }
 
@@ -7045,7 +7045,7 @@ textarea::placeholder {
 }
 
 .mp-unread-dot {
-  background: #6d4cff !important;
+  background: #1e7ae0 !important;
 }
 
 .mp-messages {
@@ -7088,7 +7088,7 @@ textarea::placeholder {
 }
 
 .mp-send-btn {
-  background: linear-gradient(135deg, #7d4cff, #3fc6ff);
+  background: linear-gradient(135deg, #1e7ae0, #3fc6ff);
   color: #fff;
 }
 
