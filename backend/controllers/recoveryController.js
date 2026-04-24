@@ -20,7 +20,18 @@ const getTransporter = () => nodemailer.createTransport({
   auth: getEmailAuth()
 });
 
-const getFrontendUrl = () => process.env.FRONTEND_URL || 'http://localhost:3000';
+const PRODUCTION_FRONTEND_FALLBACK = 'https://trustnode117-2m38g664p-suhani-jaiswals-projects.vercel.app';
+
+const normalizeFrontendUrl = (value = '') => String(value).trim().replace(/\/+$/, '');
+
+const getFrontendUrl = () => {
+  const configuredUrl = normalizeFrontendUrl(process.env.FRONTEND_URL || '');
+  if (configuredUrl) {
+    return configuredUrl;
+  }
+
+  return PRODUCTION_FRONTEND_FALLBACK;
+};
 const getEmailFrom = () => process.env.EMAIL_FROM || process.env.EMAIL_USER || process.env.NODE_MAILER_EMAIL || 'no-reply@trustnode.local';
 const RECOVERY_TOKEN_TTL_MS = 10 * 60 * 1000;
 

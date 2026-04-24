@@ -1,6 +1,6 @@
 const express = require('express');
 const http = require('http');
-const socketIo = require('socket.io');
+const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
 const dotenv = require('dotenv');
@@ -14,17 +14,34 @@ connectDB();
 
 const app = express();
 const server = http.createServer(app);
-const frontendOrigin = process.env.FRONTEND_URL || 'http://localhost:3000';
-const corsOptions = {
-  origin: frontendOrigin,
+
+const DEFAULT_FRONTEND_ORIGIN = 'https://trustnode117-2m38g664p-suhani-jaiswals-projects.vercel.app';
+const configuredFrontendOrigin = String(process.env.FRONTEND_URL || '').trim();
+const allowedOrigins = [...new Set([
+  DEFAULT_FRONTEND_ORIGIN,
+  configuredFrontendOrigin
+].filter(Boolean))];
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
-};
-const io = socketIo(server, {
-  cors: corsOptions
-});
+}));
 
-app.use(cors(corsOptions));
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
 app.use(morgan('combined', { stream: { write: msg => logger.info(msg.trim()) } }));
 app.use(express.json({ limit: '10mb' }));
 app.use('/images', express.static(path.join(__dirname, 'public/images')));

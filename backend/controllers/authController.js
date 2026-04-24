@@ -148,7 +148,18 @@ const createLoginRiskAlert = async (user, details) => {
   return sendSecurityAlertActionEmail(user, alert);
 };
 
-const getSafeFrontendUrl = () => process.env.FRONTEND_URL || 'http://localhost:3000';
+const PRODUCTION_FRONTEND_FALLBACK = 'https://trustnode117-2m38g664p-suhani-jaiswals-projects.vercel.app';
+
+const normalizeFrontendUrl = (value = '') => String(value).trim().replace(/\/+$/, '');
+
+const getSafeFrontendUrl = () => {
+  const configuredUrl = normalizeFrontendUrl(process.env.FRONTEND_URL || '');
+  if (configuredUrl) {
+    return configuredUrl;
+  }
+
+  return PRODUCTION_FRONTEND_FALLBACK;
+};
 
 const renderEmailDecisionHtml = ({
   title,
