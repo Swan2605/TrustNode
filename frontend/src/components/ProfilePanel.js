@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 const ProfilePanel = ({ profile: initialProfile, onProfileUpdate }) => {
   const [profile, setProfile] = useState(initialProfile || null);
@@ -120,12 +121,21 @@ const ProfilePanel = ({ profile: initialProfile, onProfileUpdate }) => {
   const headline = profileData.jobTitle || profileData.qualification || '';
   const location = profileData.location || '';
   const profileInitial = (profile?.username || 'S').charAt(0).toUpperCase();
+  const avatarUrl = profileData.avatar ? resolveImageUrl(profileData.avatar) : '';
 
   return (
     <div className="profile-panel">
       <article className="profile-mini-card">
         <div className="profile-mini-avatar">
-          <span className="profile-mini-avatar-fallback">{profileInitial}</span>
+          {avatarUrl ? (
+            <img 
+              src={avatarUrl} 
+              alt={profile?.username || 'User'} 
+              style={{ width: '100%', height: '100%', borderRadius: 'inherit' }}
+            />
+          ) : (
+            <span className="profile-mini-avatar-fallback">{profileInitial}</span>
+          )}
         </div>
         <div className="profile-mini-content">
           <h3>{profile?.username || 'User'}</h3>

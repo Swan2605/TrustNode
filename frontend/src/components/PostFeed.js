@@ -6,6 +6,7 @@ import {
   ensureE2EEIdentity,
   getRecipientPublicKey
 } from '../utils/e2ee';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -166,7 +167,7 @@ const PostFeed = ({
   const currentUserId = profile?._id ? String(profile._id) : '';
   const showOnlyCurrentUserPosts = feedMode === 'profile';
   const rawAvatarPath = profile?.profile?.avatar || profile?.avatar || '';
-  const avatarUrl = rawAvatarPath ? resolveAssetUrl(rawAvatarPath) : '';
+  const avatarUrl = rawAvatarPath ? resolveImageUrl(rawAvatarPath) : '';
   const composerInitial = (
     String(profile?.username || profile?.name || profile?.profile?.fullName || 'U')
       .trim()
@@ -1121,7 +1122,7 @@ const PostFeed = ({
         ) : (
           visiblePosts.map((post) => {
             const authorAvatar = post.user?.avatar
-              ? resolveAssetUrl(post.user.avatar)
+              ? resolveImageUrl(post.user.avatar)
               : 'https://via.placeholder.com/48/7d4cff/ffffff?text=U';
             const mediaUrl = post.mediaUrl
               ? resolveAssetUrl(post.mediaUrl, token)

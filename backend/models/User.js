@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema({
   publicKey: String, // RSA public key for E2EE chat
   profile: {
     banner: { type: String, default: '' },
-    avatar: { type: String, default: '/public/images/default-avatar.png' },
+    avatar: { type: String, default: '/images/default-avatar.png' },
     bio: { type: String, default: '' },
     jobTitle: { type: String, default: '' },
     location: { type: String, default: '' },

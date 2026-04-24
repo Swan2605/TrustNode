@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import io from 'socket.io-client';
+import { resolveImageUrl } from '../utils/imageUrl';
 import '../styles/chat.css';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -177,7 +178,7 @@ const ChatWindow = ({ profile }) => {
                 onClick={() => startConversation(user._id)}
               >
                 <img
-                  src={user.profile?.avatar || '/images/default-avatar.png'}
+                  src={resolveImageUrl(user.profile?.avatar || '/images/default-avatar.png')}
                   alt={user.username}
                   className="avatar-small"
                 />
@@ -198,7 +199,7 @@ const ChatWindow = ({ profile }) => {
                 onClick={() => fetchMessages(conv._id)}
               >
                 <img
-                  src={conv.avatar || '/images/default-avatar.png'}
+                  src={resolveImageUrl(conv.avatar || '/images/default-avatar.png')}
                   alt={conv.username}
                   className="avatar-small"
                 />
@@ -222,7 +223,7 @@ const ChatWindow = ({ profile }) => {
               {selectedConversation && (
                 <>
                   <img
-                    src={selectedConversation.avatar || '/images/default-avatar.png'}
+                    src={resolveImageUrl(selectedConversation.avatar || '/images/default-avatar.png')}
                     alt={selectedConversation.username}
                     className="avatar-medium"
                   />

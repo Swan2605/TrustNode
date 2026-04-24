@@ -1,19 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const DEFAULT_BANNER_PATH = '/images/default_banner.jpg';
-
-const resolveImageUrl = (url) => {
-  if (!url) return '';
-  if (url.startsWith('http')) return url;
-  if (url.startsWith('/public/images/')) {
-    return `${API_BASE}${url.replace('/public/images/', '/images/')}`;
-  }
-  if (url.startsWith('/images/')) return `${API_BASE}${url}`;
-  if (url.startsWith('images/')) return `${API_BASE}/${url}`;
-  return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
-};
 
 const normalizeList = (items = []) => (
   Array.isArray(items)

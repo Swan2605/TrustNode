@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -139,11 +140,7 @@ const Navbar = ({
                 <div className="search-dropdown-empty">{searchStatus}</div>
               ) : null}
               {searchResults.map((result) => {
-                const avatarUrl = result.profile.avatar && result.profile.avatar.startsWith('http')
-                  ? result.profile.avatar
-                  : result.profile.avatar
-                    ? `${API_BASE}${result.profile.avatar}`
-                    : null;
+                const avatarUrl = result.profile?.avatar ? resolveImageUrl(result.profile.avatar) : null;
 
                 return (
                   <button
