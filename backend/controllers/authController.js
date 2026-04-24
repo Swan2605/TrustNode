@@ -148,7 +148,7 @@ const createLoginRiskAlert = async (user, details) => {
   return sendSecurityAlertActionEmail(user, alert);
 };
 
-const PRODUCTION_FRONTEND_FALLBACK = 'https://trustnode117-2m38g664p-suhani-jaiswals-projects.vercel.app';
+const PRODUCTION_FRONTEND_FALLBACK = 'https://trustnodeapp117-nyd2wmqpy-suhani-jaiswals-projects.vercel.app';
 
 const normalizeFrontendUrl = (value = '') => String(value).trim().replace(/\/+$/, '');
 

@@ -1,4 +1,4 @@
-const express = require('express');
+ doconst express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
@@ -15,7 +15,27 @@ connectDB();
 const app = express();
 const server = http.createServer(app);
 
+const DEFAULT_FRONTEND_ORIGIN = 'https://trustnodeapp117-nyd2wmqpy-suhani-jaiswals-projects.vercel.app';
+const LOCALHOST_ORIGIN = 'http://localhost:3000';
+const VERCEL_PREVIEW_ORIGIN_PATTERN = /^https:\/\/trustnode117-[a-z0-9-]+-suhani-jaiswals-projects\.vercel\.app$/i;
+
+const normalizeOrigin = (origin = '') => String(origin || '').trim().replace(/\/+$/, '');
+
+const configuredOrigins = String(process.env.FRONTEND_URLS || '')
+  .split(',')
 const DEFAULT_FRONTEND_ORIGIN = 'https://trustnode117-2m38g664p-suhani-jaiswals-projects.vercel.app';
+  .filter(Boolean);
+
+const singleFrontendOrigin = normalizeOrigin(process.env.FRONTEND_URL || '');
+if (singleFrontendOrigin) {
+  configuredOrigins.push(singleFrontendOrigin);
+}
+
+const allowedOrigins = new Set(
+  [DEFAULT_FRONTEND_ORIGIN, LOCALHOST_ORIGIN, ...configuredOrigins]
+    .map((origin) => normalizeOrigin(origin))
+    .filter(Boolean)
+);
 const VERCEL_PREVIEW_ORIGIN_PATTERN = /^https:\/\/trustnode117-[a-z0-9-]+-suhani-jaiswals-projects\.vercel\.app$/i;
 
 const normalizeOrigin = (origin = '') => String(origin || '').trim().replace(/\/+$/, '');
