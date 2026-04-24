@@ -1,4 +1,4 @@
- doconst express = require('express');
+const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
@@ -23,25 +23,6 @@ const normalizeOrigin = (origin = '') => String(origin || '').trim().replace(/\/
 
 const configuredOrigins = String(process.env.FRONTEND_URLS || '')
   .split(',')
-const DEFAULT_FRONTEND_ORIGIN = 'https://trustnode117-2m38g664p-suhani-jaiswals-projects.vercel.app';
-  .filter(Boolean);
-
-const singleFrontendOrigin = normalizeOrigin(process.env.FRONTEND_URL || '');
-if (singleFrontendOrigin) {
-  configuredOrigins.push(singleFrontendOrigin);
-}
-
-const allowedOrigins = new Set(
-  [DEFAULT_FRONTEND_ORIGIN, LOCALHOST_ORIGIN, ...configuredOrigins]
-    .map((origin) => normalizeOrigin(origin))
-    .filter(Boolean)
-);
-const VERCEL_PREVIEW_ORIGIN_PATTERN = /^https:\/\/trustnode117-[a-z0-9-]+-suhani-jaiswals-projects\.vercel\.app$/i;
-
-const normalizeOrigin = (origin = '') => String(origin || '').trim().replace(/\/+$/, '');
-
-const configuredOrigins = String(process.env.FRONTEND_URLS || '')
-  .split(',')
   .map((origin) => normalizeOrigin(origin))
   .filter(Boolean);
 
@@ -51,7 +32,7 @@ if (singleFrontendOrigin) {
 }
 
 const allowedOrigins = new Set(
-  [DEFAULT_FRONTEND_ORIGIN, ...configuredOrigins]
+  [DEFAULT_FRONTEND_ORIGIN, LOCALHOST_ORIGIN, ...configuredOrigins]
     .map((origin) => normalizeOrigin(origin))
     .filter(Boolean)
 );
@@ -94,6 +75,7 @@ const io = new Server(server, {
     credentials: true
   }
 });
+
 app.use(morgan('combined', { stream: { write: msg => logger.info(msg.trim()) } }));
 app.use(express.json({ limit: '10mb' }));
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
@@ -228,3 +210,4 @@ process.on('uncaughtException', (error) => {
   logger.error('Uncaught exception:', error);
   process.exit(1);
 });
+
