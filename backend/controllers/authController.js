@@ -285,7 +285,7 @@ exports.register = async (req, res) => {
       return res.status(400).json({ msg: 'An account with this phone number already exists. Please sign in or use another phone number.' });
     }
 
-    const totpSecret = speakeasy.generateSecret({ name: `Purple:${normalizedEmail}` });
+    const totpSecret = speakeasy.generateSecret({ name: `Trust Node:${normalizedEmail}` });
     const user = new User({
       username: normalizedUsername,
       email: normalizedEmail,
@@ -299,8 +299,8 @@ exports.register = async (req, res) => {
 
     const otpauthUrl = speakeasy.otpauthURL({
       secret: totpSecret.base32,
-      label: `Purple:${normalizedEmail}`,
-      issuer: 'Purple',
+      label: `Trust Node:${normalizedEmail}`,
+      issuer: 'Trust Node',
       encoding: 'base32'
     });
     const qr = await QRCode.toDataURL(otpauthUrl);

@@ -88,15 +88,29 @@ const createPrivacyContext = (viewer = null) => {
     }
 
     const ownerFriends = owner?.friends;
+    const viewerFriends = viewer?.friends;
+
     if (Array.isArray(ownerFriends) && ownerFriends.length > 0) {
-      const isConnected = ownerFriends.some((friendId) => toUserId(friendId) === viewerId);
-      relationshipCache.set(cacheKey, isConnected);
-      return isConnected;
+      const ownerHasViewer = ownerFriends.some((friendId) => toUserId(friendId) === viewerId);
+      if (ownerHasViewer) {
+        relationshipCache.set(cacheKey, true);
+        return true;
+      }
+    }
+
+    if (Array.isArray(viewerFriends) && viewerFriends.length > 0) {
+      const viewerHasOwner = viewerFriends.some((friendId) => toUserId(friendId) === ownerId);
+      if (viewerHasOwner) {
+        relationshipCache.set(cacheKey, true);
+        return true;
+      }
     }
 
     const isConnected = Boolean(await User.exists({
-      _id: ownerId,
-      friends: viewerId
+      $or: [
+        { _id: ownerId, friends: viewerId },
+        { _id: viewerId, friends: ownerId }
+      ]
     }));
     relationshipCache.set(cacheKey, isConnected);
     return isConnected;

@@ -3,7 +3,13 @@ import ProfilePanel from './ProfilePanel';
 import TrendingTopics from './TrendingTopics';
 import PostFeed from './PostFeed';
 
-const Dashboard = ({ profile, onProfileUpdate, onPostCreated = () => {} }) => {
+const Dashboard = ({
+  profile,
+  onProfileUpdate,
+  onPostCreated = () => {},
+  onPostDeleted = () => {},
+  onViewProfile = () => {}
+}) => {
   return (
     <div className="dashboard-layout">
       <aside className="left-panel">
@@ -11,7 +17,12 @@ const Dashboard = ({ profile, onProfileUpdate, onPostCreated = () => {} }) => {
       </aside>
       <main className="main-content">
         <div className="feed-box">
-          <PostFeed profile={profile} onPostCreated={onPostCreated} />
+          <PostFeed
+            profile={profile}
+            onPostCreated={onPostCreated}
+            onPostDeleted={onPostDeleted}
+            onViewProfile={onViewProfile}
+          />
         </div>
       </main>
       <aside className="right-panel">

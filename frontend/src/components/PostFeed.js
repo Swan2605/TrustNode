@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
-import { FiThumbsUp, FiMessageCircle, FiShare2 } from 'react-icons/fi';
+import { FiThumbsUp, FiMessageCircle, FiShare2, FiEdit2, FiTrash2 } from 'react-icons/fi';
 import {
   encryptMessageForUsers,
   ensureE2EEIdentity,
@@ -55,6 +55,7 @@ const resolveDownloadName = (contentDisposition = '', fallbackName = 'attachment
 
 const SHARE_RECENT_STORAGE_KEY = 'trustnode.shareRecentRecipients';
 const SHARE_RECENT_LIMIT = 8;
+const POST_EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 const normalizeShareRecipient = (candidate = {}) => {
   const recipientId = candidate._id ? String(candidate._id) : '';
@@ -118,7 +119,13 @@ const readRecentShareRecipients = () => {
   }
 };
 
-const PostFeed = ({ profile, onPostCreated = () => {}, feedMode = 'all' }) => {
+const PostFeed = ({
+  profile,
+  onPostCreated = () => {},
+  onPostDeleted = () => {},
+  onViewProfile = () => {},
+  feedMode = 'all'
+}) => {
   const [dynamicPosts, setDynamicPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
@@ -140,6 +147,10 @@ const PostFeed = ({ profile, onPostCreated = () => {}, feedMode = 'all' }) => {
   const [searchingShareUsers, setSearchingShareUsers] = useState(false);
   const [recentShareRecipients, setRecentShareRecipients] = useState(() => readRecentShareRecipients());
   const [composerAvatarFailed, setComposerAvatarFailed] = useState(false);
+  const [editingPostId, setEditingPostId] = useState('');
+  const [editingPostContent, setEditingPostContent] = useState('');
+  const [savingEditPostId, setSavingEditPostId] = useState('');
+  const [deletingPostId, setDeletingPostId] = useState('');
 
   const [content, setContent] = useState('');
   const [mediaFile, setMediaFile] = useState(null);
@@ -217,6 +228,33 @@ const PostFeed = ({ profile, onPostCreated = () => {}, feedMode = 'all' }) => {
 
     return dynamicPosts.filter((post) => String(post?.user?._id || '') === currentUserId);
   }, [currentUserId, dynamicPosts, showOnlyCurrentUserPosts]);
+
+  const isOwnerPost = useCallback((post) => (
+    Boolean(currentUserId) && String(post?.user?._id || '') === currentUserId
+  ), [currentUserId]);
+
+  const isPostEditable = useCallback((post) => {
+    if (!isOwnerPost(post)) {
+      return false;
+    }
+    const createdAtMs = new Date(post?.createdAt).getTime();
+    if (!Number.isFinite(createdAtMs)) {
+      return false;
+    }
+    return Date.now() - createdAtMs <= POST_EDIT_WINDOW_MS;
+  }, [isOwnerPost]);
+
+  const openPostAuthorProfile = useCallback((post) => {
+    const userId = String(post?.user?._id || '');
+    if (!userId) return;
+    onViewProfile({
+      _id: userId,
+      id: userId,
+      username: post?.user?.username || 'Unknown user',
+      avatar: post?.user?.avatar || '',
+      jobTitle: post?.user?.title || ''
+    });
+  }, [onViewProfile]);
 
   const fetchConnections = useCallback(async () => {
     if (!token) {
@@ -887,6 +925,100 @@ const PostFeed = ({ profile, onPostCreated = () => {}, feedMode = 'all' }) => {
     }
   };
 
+  const handleStartEditingPost = (post) => {
+    if (!isOwnerPost(post)) return;
+    if (!isPostEditable(post)) {
+      setStatus('Post editing is allowed only within 24 hours of publishing.');
+      return;
+    }
+
+    setEditingPostId(post._id);
+    setEditingPostContent(String(post.content || ''));
+    setStatus('');
+  };
+
+  const handleCancelEditingPost = () => {
+    setEditingPostId('');
+    setEditingPostContent('');
+  };
+
+  const handleSaveEditedPost = async (post) => {
+    if (!token) {
+      setStatus('Sign in to edit posts.');
+      return;
+    }
+
+    const nextContent = editingPostContent.trim();
+    if (!nextContent && !post.mediaUrl && !post.imageUrl && !post.hasAttachment) {
+      setStatus('Post content cannot be empty unless media or attachment is present.');
+      return;
+    }
+
+    try {
+      setSavingEditPostId(post._id);
+      const res = await axios.patch(
+        `/api/posts/${post._id}`,
+        { content: nextContent },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const updatedPost = res.data?.post;
+      if (updatedPost?._id) {
+        setDynamicPosts((prev) => prev.map((item) => (
+          item._id === updatedPost._id ? updatedPost : item
+        )));
+      }
+      setStatus(res.data?.msg || 'Post updated successfully.');
+      setEditingPostId('');
+      setEditingPostContent('');
+    } catch (error) {
+      const message = error.response?.data?.msg || 'Unable to update post.';
+      setStatus(message);
+    } finally {
+      setSavingEditPostId('');
+    }
+  };
+
+  const handleDeletePost = async (post) => {
+    if (!token) {
+      setStatus('Sign in to delete posts.');
+      return;
+    }
+
+    const shouldDelete = window.confirm('Delete this post permanently?');
+    if (!shouldDelete) return;
+
+    try {
+      setDeletingPostId(post._id);
+      const res = await axios.delete(`/api/posts/${post._id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setDynamicPosts((prev) => prev.filter((item) => item._id !== post._id));
+      setCommentDrafts((prev) => {
+        const nextDrafts = { ...prev };
+        delete nextDrafts[post._id];
+        return nextDrafts;
+      });
+      setOpenComments((prev) => {
+        const nextState = { ...prev };
+        delete nextState[post._id];
+        return nextState;
+      });
+      if (editingPostId === post._id) {
+        setEditingPostId('');
+        setEditingPostContent('');
+      }
+      onPostDeleted(post._id);
+      setStatus(res.data?.msg || 'Post deleted successfully.');
+    } catch (error) {
+      const message = error.response?.data?.msg || 'Unable to delete post.';
+      setStatus(message);
+    } finally {
+      setDeletingPostId('');
+    }
+  };
+
   return (
     <div className="post-feed-wrap">
       <div className="post-creator-card">
@@ -1003,16 +1135,64 @@ const PostFeed = ({ profile, onPostCreated = () => {}, feedMode = 'all' }) => {
             const comments = Array.isArray(post.comments) ? post.comments : [];
             const commentsCount = comments.length;
             const sharesCount = Array.isArray(post.shares) ? post.shares.length : Number(post.shares || 0);
+            const isOwnPost = isOwnerPost(post);
+            const canEditPost = isPostEditable(post);
+            const isEditingPost = editingPostId === post._id;
+            const isBusyWithEdit = savingEditPostId === post._id;
+            const isBusyWithDelete = deletingPostId === post._id;
+            const canOpenAuthorProfile = Boolean(post.user?._id);
 
             return (
               <div key={post._id} className="post" id={`post-${post._id}`}>
                 <div className="post-header">
-                  <img src={authorAvatar} alt="avatar" className="avatar" />
-                  <div>
-                    <span className="post-author">{post.user?.username || 'Unknown user'}</span>
+                  <button
+                    type="button"
+                    className="post-author-trigger"
+                    onClick={() => openPostAuthorProfile(post)}
+                    disabled={!canOpenAuthorProfile}
+                    title={canOpenAuthorProfile ? 'View profile' : 'Profile unavailable'}
+                  >
+                    <img src={authorAvatar} alt="avatar" className="avatar" />
+                  </button>
+                  <div className="post-author-meta">
+                    <button
+                      type="button"
+                      className="post-author-link"
+                      onClick={() => openPostAuthorProfile(post)}
+                      disabled={!canOpenAuthorProfile}
+                      title={canOpenAuthorProfile ? 'View profile' : 'Profile unavailable'}
+                    >
+                      {post.user?.username || 'Unknown user'}
+                    </button>
                     <p className="post-subtitle">{post.user?.title || 'Security member'} - {formatPostTime(post.createdAt)}</p>
                   </div>
-                  <span className={`visibility ${post.visibility}`}>{post.visibility}</span>
+                  <div className="post-header-right">
+                    {isOwnPost && (
+                      <div className="post-owner-controls">
+                        <button
+                          type="button"
+                          className="post-owner-btn"
+                          onClick={() => handleStartEditingPost(post)}
+                          disabled={!canEditPost || isBusyWithEdit || isBusyWithDelete}
+                          title={canEditPost ? 'Edit post' : 'Editing window closed after 24 hours'}
+                        >
+                          <FiEdit2 size={14} />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="post-owner-btn danger"
+                          onClick={() => handleDeletePost(post)}
+                          disabled={isBusyWithDelete || isBusyWithEdit}
+                          title="Delete post"
+                        >
+                          <FiTrash2 size={14} />
+                          <span>{isBusyWithDelete ? 'Deleting...' : 'Delete'}</span>
+                        </button>
+                      </div>
+                    )}
+                    <span className={`visibility ${post.visibility}`}>{post.visibility}</span>
+                  </div>
                 </div>
 
                 {mediaUrl && mediaType === 'video' && (
@@ -1023,7 +1203,43 @@ const PostFeed = ({ profile, onPostCreated = () => {}, feedMode = 'all' }) => {
                   <img src={mediaUrl} alt="post media" className="post-image" />
                 )}
 
-                {post.content && <p className="post-copy">{post.content}</p>}
+                {isOwnPost && !canEditPost && (
+                  <p className="post-owner-note">Edit window closed. Posts can be edited only in the first 24 hours.</p>
+                )}
+
+                {isEditingPost ? (
+                  <div className="post-edit-panel">
+                    <textarea
+                      className="post-edit-input"
+                      value={editingPostContent}
+                      onChange={(event) => setEditingPostContent(event.target.value)}
+                      rows={4}
+                      maxLength={2000}
+                      placeholder="Update your post..."
+                      disabled={isBusyWithEdit || isBusyWithDelete}
+                    />
+                    <div className="post-edit-actions">
+                      <button
+                        type="button"
+                        className="post-owner-btn"
+                        onClick={() => handleSaveEditedPost(post)}
+                        disabled={isBusyWithEdit || isBusyWithDelete}
+                      >
+                        {isBusyWithEdit ? 'Saving...' : 'Save changes'}
+                      </button>
+                      <button
+                        type="button"
+                        className="post-owner-btn"
+                        onClick={handleCancelEditingPost}
+                        disabled={isBusyWithEdit || isBusyWithDelete}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  post.content && <p className="post-copy">{post.content}</p>
+                )}
 
                 <div className="post-stats-row">
                   <span>{likesCount} like{likesCount === 1 ? '' : 's'}</span>
@@ -1053,7 +1269,7 @@ const PostFeed = ({ profile, onPostCreated = () => {}, feedMode = 'all' }) => {
                   <button
                     type="button"
                     onClick={() => handleLike(post)}
-                    disabled={likingPostId === post._id}
+                    disabled={likingPostId === post._id || isBusyWithDelete || isBusyWithEdit}
                     className={`post-action-btn ${likedByCurrentUser ? 'post-action-active' : ''}`}
                     title={likedByCurrentUser ? 'Liked' : 'Like'}
                   >
@@ -1063,6 +1279,7 @@ const PostFeed = ({ profile, onPostCreated = () => {}, feedMode = 'all' }) => {
                   <button
                     type="button"
                     onClick={() => toggleCommentsPanel(post._id)}
+                    disabled={isBusyWithDelete}
                     className="post-action-btn"
                     title="Comment"
                   >
@@ -1072,7 +1289,7 @@ const PostFeed = ({ profile, onPostCreated = () => {}, feedMode = 'all' }) => {
                   <button
                     type="button"
                     onClick={() => handleShare(post)}
-                    disabled={sharingPostId === post._id}
+                    disabled={sharingPostId === post._id || isBusyWithDelete || isBusyWithEdit}
                     className={`post-action-btn ${sharedByCurrentUser ? 'post-action-active' : ''}`}
                     title={sharedByCurrentUser ? 'Shared' : 'Share'}
                   >
@@ -1114,6 +1331,7 @@ const PostFeed = ({ profile, onPostCreated = () => {}, feedMode = 'all' }) => {
                         type="text"
                         placeholder="Write a comment..."
                         value={commentDrafts[post._id] || ''}
+                        disabled={isBusyWithDelete || isBusyWithEdit}
                         onChange={(event) => {
                           const value = event.target.value;
                           setCommentDrafts((prev) => ({
@@ -1123,7 +1341,7 @@ const PostFeed = ({ profile, onPostCreated = () => {}, feedMode = 'all' }) => {
                         }}
                         maxLength={500}
                       />
-                      <button type="submit" disabled={commentingPostId === post._id}>
+                      <button type="submit" disabled={commentingPostId === post._id || isBusyWithDelete || isBusyWithEdit}>
                         {commentingPostId === post._id ? 'Posting...' : 'Post'}
                       </button>
                     </form>

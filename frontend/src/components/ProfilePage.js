@@ -23,7 +23,7 @@ const normalizeList = (items = []) => (
     : []
 );
 
-const ProfilePage = ({ profile, onProfileUpdate, onOpenPrivacy }) => {
+const ProfilePage = ({ profile, onProfileUpdate, onOpenPrivacy, onViewProfile = () => {} }) => {
   const [showEdit, setShowEdit] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadTarget, setUploadTarget] = useState('');
@@ -286,6 +286,20 @@ const ProfilePage = ({ profile, onProfileUpdate, onOpenPrivacy }) => {
     });
   };
 
+  const handleProfilePostDeleted = () => {
+    if (!profile || typeof onProfileUpdate !== 'function') return;
+    const currentPostsCount = Number(profile.postsCount ?? profile.profile?.postsCount ?? 0);
+    const nextPostsCount = Math.max(0, currentPostsCount - 1);
+    onProfileUpdate({
+      ...profile,
+      postsCount: nextPostsCount,
+      profile: {
+        ...(profile.profile || {}),
+        postsCount: nextPostsCount
+      }
+    });
+  };
+
   if (!profile) {
     return (
       <main className="page-content profile-page">
@@ -528,7 +542,13 @@ const ProfilePage = ({ profile, onProfileUpdate, onOpenPrivacy }) => {
             <p className="profile-side-note">
               Create updates and review your recent posts directly from your profile.
             </p>
-            <PostFeed profile={profile} feedMode="profile" onPostCreated={handleProfilePostCreated} />
+            <PostFeed
+              profile={profile}
+              feedMode="profile"
+              onPostCreated={handleProfilePostCreated}
+              onPostDeleted={handleProfilePostDeleted}
+              onViewProfile={onViewProfile}
+            />
           </section>
         </section>
 

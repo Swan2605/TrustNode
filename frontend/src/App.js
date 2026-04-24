@@ -88,7 +88,7 @@ function App() {
 
   const fetchProfile = useCallback(async () => {
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) return false;
     try {
       const res = await axios.get(`${API_BASE}/api/profile`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -100,6 +100,7 @@ function App() {
       });
       await fetchConnectionRequests();
       await fetchUnreadMessages();
+      return true;
     } catch (error) {
       console.warn('Profile fetch failed', error);
       localStorage.removeItem('token');
@@ -107,6 +108,7 @@ function App() {
       setProfile(null);
       setConnectionRequests([]);
       setUnreadMessagesCount(0);
+      return false;
     }
   }, [API_BASE, fetchConnectionRequests, fetchUnreadMessages]);
 
@@ -181,6 +183,22 @@ function App() {
       if (!prev) return prev;
       const currentCount = Number(prev.postsCount ?? prev.profile?.postsCount ?? 0);
       const nextPostsCount = currentCount + 1;
+      return {
+        ...prev,
+        postsCount: nextPostsCount,
+        profile: {
+          ...(prev.profile || {}),
+          postsCount: nextPostsCount
+        }
+      };
+    });
+  };
+
+  const handlePostDeleted = () => {
+    setProfile((prev) => {
+      if (!prev) return prev;
+      const currentCount = Number(prev.postsCount ?? prev.profile?.postsCount ?? 0);
+      const nextPostsCount = Math.max(0, currentCount - 1);
       return {
         ...prev,
         postsCount: nextPostsCount,
@@ -292,11 +310,20 @@ function App() {
       case 'setup2fa':
         return <Setup2FA qr={setupQr} userId={setupUserId} onNext={handleNext} onLogin={handleLoginSuccess} />;
       case 'dashboard':
-        return <Dashboard profile={profile} onProfileUpdate={setProfile} onPostCreated={handlePostCreated} />;
+        return (
+          <Dashboard
+            profile={profile}
+            onProfileUpdate={setProfile}
+            onPostCreated={handlePostCreated}
+            onPostDeleted={handlePostDeleted}
+            onViewProfile={handleViewProfile}
+          />
+        );
       case 'profile':
         return <ProfilePage
           profile={profile}
           onProfileUpdate={setProfile}
+          onViewProfile={handleViewProfile}
           onOpenPrivacy={() => setScreen('privacy')}
         />;
       case 'privacy':
@@ -313,11 +340,6 @@ function App() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      fetchProfile();
-    }
-
     const path = window.location.pathname;
     const match = path.match(/^\/reset\/(.+)$/);
     if (match?.[1]) {
@@ -335,7 +357,21 @@ function App() {
         setResetToken(storedRecoveryToken);
       }
       setScreen('reset');
+      return;
     }
+
+    const initializeSession = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const authenticated = await fetchProfile();
+      if (!authenticated) return;
+
+      setActiveTab('home');
+      setScreen((prev) => (prev === 'home' ? 'dashboard' : prev));
+    };
+
+    initializeSession();
   }, [fetchProfile]);
 
   useEffect(() => {

@@ -15,6 +15,7 @@ const SECURE_POST_MEDIA_DIR = path.resolve(__dirname, '../storage/post-media');
 const LEGACY_PUBLIC_MEDIA_DIR = path.resolve(__dirname, '../public/media');
 const LEGACY_PUBLIC_IMAGES_DIR = path.resolve(__dirname, '../public/images');
 const MEDIA_KEY_PATTERN = /^post_media_[a-f0-9]{24}_\d+_[a-f0-9]{16}\.(jpg|jpeg|png|mp4|webm)$/i;
+const POST_EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 const resolveMimeTypeFromPath = (filePath = '', fallbackMediaType = 'image') => {
   const extension = path.extname(filePath).toLowerCase();
@@ -29,6 +30,33 @@ const isPathInside = (candidatePath, rootPath) => {
   const absoluteCandidate = path.resolve(candidatePath);
   const absoluteRoot = path.resolve(rootPath);
   return absoluteCandidate === absoluteRoot || absoluteCandidate.startsWith(`${absoluteRoot}${path.sep}`);
+};
+
+const getPostOwnerId = (post) => {
+  if (!post?.user) return '';
+  if (typeof post.user === 'object' && post.user._id) return String(post.user._id);
+  return String(post.user);
+};
+
+const isPostOwner = (post, userId) => getPostOwnerId(post) === String(userId || '');
+
+const isWithinEditWindow = (createdAt) => {
+  const createdAtMs = new Date(createdAt).getTime();
+  if (!Number.isFinite(createdAtMs)) {
+    return false;
+  }
+  return Date.now() - createdAtMs <= POST_EDIT_WINDOW_MS;
+};
+
+const safeUnlinkFile = async (targetPath) => {
+  if (!targetPath) return;
+  try {
+    await fs.promises.unlink(targetPath);
+  } catch (error) {
+    if (error?.code !== 'ENOENT') {
+      console.warn(`Unable to delete file ${targetPath}: ${error.message}`);
+    }
+  }
 };
 
 const mapCommentForFeed = (comment) => ({
@@ -461,6 +489,94 @@ exports.addComment = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ msg: error.message });
+  }
+};
+
+exports.updatePost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ msg: 'Post not found.' });
+    }
+
+    if (!isPostOwner(post, req.user._id)) {
+      return res.status(403).json({ msg: 'You can edit only your own posts.' });
+    }
+
+    if (!isWithinEditWindow(post.createdAt)) {
+      return res.status(403).json({ msg: 'Post editing is allowed only within 24 hours of publishing.' });
+    }
+
+    const nextContent = typeof req.body?.content === 'string' ? req.body.content.trim() : '';
+    const hasMedia = Boolean(post.mediaKey || post.mediaUrl || post.imageUrl);
+    const hasAttachment = Boolean(post.attachment);
+    if (!nextContent && !hasMedia && !hasAttachment) {
+      return res.status(400).json({ msg: 'Post content cannot be empty unless media or attachment is present.' });
+    }
+
+    post.content = nextContent;
+    await post.save();
+
+    const populatedPost = await Post.findById(post._id)
+      .populate('user', 'username profile.avatar profile.jobTitle friends profileVisibility postVisibility privacySettings')
+      .populate('comments.user', 'username profile.avatar profile.jobTitle')
+      .populate('attachment');
+
+    return res.json({
+      msg: 'Post updated successfully.',
+      post: mapPostForFeed(populatedPost, true)
+    });
+  } catch (error) {
+    return res.status(500).json({ msg: error.message });
+  }
+};
+
+exports.deletePost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id).populate('attachment');
+    if (!post) {
+      return res.status(404).json({ msg: 'Post not found.' });
+    }
+
+    if (!isPostOwner(post, req.user._id)) {
+      return res.status(403).json({ msg: 'You can delete only your own posts.' });
+    }
+
+    if (post.mediaKey) {
+      const mediaPath = path.join(SECURE_POST_MEDIA_DIR, post.mediaKey);
+      if (isPathInside(mediaPath, SECURE_POST_MEDIA_DIR)) {
+        await safeUnlinkFile(mediaPath);
+      }
+    }
+
+    if (post.attachment?._id) {
+      const attachmentId = post.attachment._id;
+      const otherPostsUsingAttachment = await Post.countDocuments({
+        _id: { $ne: post._id },
+        attachment: attachmentId
+      });
+
+      if (otherPostsUsingAttachment === 0) {
+        await safeUnlinkFile(post.attachment.path);
+        await File.deleteOne({ _id: attachmentId });
+      }
+    }
+
+    await Promise.all([
+      Post.deleteOne({ _id: post._id }),
+      Notification.deleteMany({ post: post._id }),
+      User.updateOne(
+        { _id: req.user._id, 'profile.postsCount': { $gt: 0 } },
+        { $inc: { 'profile.postsCount': -1 } }
+      )
+    ]);
+
+    return res.json({
+      msg: 'Post deleted successfully.',
+      postId: post._id
+    });
+  } catch (error) {
+    return res.status(500).json({ msg: error.message });
   }
 };
 

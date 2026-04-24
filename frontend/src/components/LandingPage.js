@@ -5,7 +5,7 @@ const LandingPage = ({ onLogin, onRegister }) => {
     <div className="landing-page">
       <section className="landing-hero">
         <div className="landing-copy">
-          <p className="eyebrow">Purple security for modern networks</p>
+          <p className="eyebrow">Trust Node security for modern networks</p>
           <h1>Connect with trusted cyber professionals in a secure, privacy-first community.</h1>
           <p className="landing-lead">
             Trust node brings together ethical hackers, security analysts, and privacy experts in one polished platform.
