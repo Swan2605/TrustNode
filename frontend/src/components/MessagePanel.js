@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import io from 'socket.io-client';
 import axios from 'axios';
 import {
@@ -229,7 +229,7 @@ const MessagePanel = ({ onClose, activeChatUser }) => {
   const [encryptionReady, setEncryptionReady] = useState(false);
   const [encryptionError, setEncryptionError] = useState('');
 
-  const fetchConversations = async (authToken = localStorage.getItem('token')) => {
+  const fetchConversations = useCallback(async (authToken = localStorage.getItem('token')) => {
     if (!authToken) return;
 
     try {
@@ -282,9 +282,9 @@ const MessagePanel = ({ onClose, activeChatUser }) => {
     } catch (error) {
       console.error('Failed to fetch conversations:', error);
     }
-  };
+  }, []);
 
-  const decryptTextIfNeeded = async (messagePayload) => {
+  const decryptTextIfNeeded = useCallback(async (messagePayload) => {
     const encrypted = Boolean(
       messagePayload?.encryptedMsg
       && messagePayload?.encryptedAesKey
@@ -309,9 +309,9 @@ const MessagePanel = ({ onClose, activeChatUser }) => {
     } catch (error) {
       return '[Unable to decrypt message]';
     }
-  };
+  }, [privateKeyBase64]);
 
-  const markMessagesAsRead = async (userId) => {
+  const markMessagesAsRead = useCallback(async (userId) => {
     const token = localStorage.getItem('token');
     if (!token || !userId) return;
 
@@ -332,9 +332,9 @@ const MessagePanel = ({ onClose, activeChatUser }) => {
     } catch (error) {
       console.error('Failed to mark messages as read:', error);
     }
-  };
+  }, []);
 
-  const fetchMessages = async (threadId, userId) => {
+  const fetchMessages = useCallback(async (threadId, userId) => {
     const token = localStorage.getItem('token');
     if (!token || !threadId || !userId) return;
 
@@ -387,7 +387,7 @@ const MessagePanel = ({ onClose, activeChatUser }) => {
     } catch (error) {
       console.error('Failed to fetch message history:', error);
     }
-  };
+  }, [currentUserId, decryptTextIfNeeded]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -433,7 +433,7 @@ const MessagePanel = ({ onClose, activeChatUser }) => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [fetchConversations]);
 
   useEffect(() => {
     if (currentUserId) {
@@ -516,7 +516,7 @@ const MessagePanel = ({ onClose, activeChatUser }) => {
       socket.off('message-sent', handleMessageSent);
       socket.off('message-error', handleMessageError);
     };
-  }, [currentUserId, currentChatId, privateKeyBase64]);
+  }, [currentUserId, currentChatId, decryptTextIfNeeded, fetchConversations, markMessagesAsRead]);
 
   useEffect(() => {
     if (!activeChatUser) return;
@@ -565,7 +565,7 @@ const MessagePanel = ({ onClose, activeChatUser }) => {
 
     setCurrentChatId(threadId);
     fetchMessages(threadId, userId);
-  }, [activeChatUser]);
+  }, [activeChatUser, fetchMessages]);
 
   const openChat = (threadId) => {
     setCurrentChatId(threadId);

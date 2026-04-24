@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { jsPDF } from 'jspdf';
 
@@ -35,7 +35,7 @@ const SecurityLogs = () => {
 
   const token = localStorage.getItem('token');
 
-  const fetchSecurityData = async () => {
+  const fetchSecurityData = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -50,11 +50,11 @@ const SecurityLogs = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchSecurityData();
-  }, []);
+  }, [fetchSecurityData]);
 
   const handleLogoutOtherDevices = async () => {
     try {

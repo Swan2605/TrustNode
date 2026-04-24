@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import './styles.css';
 import axios from 'axios';
 import Login from './components/Login';
@@ -29,7 +29,6 @@ function App() {
   const [viewUser, setViewUser] = useState(null);
   const [activeChatUser, setActiveChatUser] = useState(null);
   const [connectionRequests, setConnectionRequests] = useState([]);
-  const [notifications, setNotifications] = useState([]);
   const [setupQr, setSetupQr] = useState(null);
   const [setupUserId, setSetupUserId] = useState(null);
   const [showMessages, setShowMessages] = useState(false);
@@ -54,7 +53,7 @@ function App() {
     await fetchProfile();
   };
 
-  const fetchConnectionRequests = async () => {
+  const fetchConnectionRequests = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
@@ -66,23 +65,9 @@ function App() {
       console.warn('Connection requests fetch failed', error);
       setConnectionRequests([]);
     }
-  };
+  }, [API_BASE]);
 
-  const fetchNotifications = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    try {
-      const res = await axios.get(`${API_BASE}/api/profile/notifications`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setNotifications(res.data.notifications || []);
-    } catch (error) {
-      console.warn('Notifications fetch failed', error);
-      setNotifications([]);
-    }
-  };
-
-  const fetchUnreadMessages = async () => {
+  const fetchUnreadMessages = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (!token) {
       setUnreadMessagesCount(0);
@@ -99,9 +84,9 @@ function App() {
       console.warn('Unread message count fetch failed', error);
       setUnreadMessagesCount(0);
     }
-  };
+  }, [API_BASE]);
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
@@ -114,7 +99,6 @@ function App() {
         console.warn('E2EE key initialization failed:', error);
       });
       await fetchConnectionRequests();
-      await fetchNotifications();
       await fetchUnreadMessages();
     } catch (error) {
       console.warn('Profile fetch failed', error);
@@ -124,7 +108,7 @@ function App() {
       setConnectionRequests([]);
       setUnreadMessagesCount(0);
     }
-  };
+  }, [API_BASE, fetchConnectionRequests, fetchUnreadMessages]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -352,7 +336,7 @@ function App() {
       }
       setScreen('reset');
     }
-  }, []);
+  }, [fetchProfile]);
 
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -360,7 +344,7 @@ function App() {
     fetchUnreadMessages();
     const interval = setInterval(fetchUnreadMessages, 5000);
     return () => clearInterval(interval);
-  }, [isLoggedIn]);
+  }, [isLoggedIn, fetchUnreadMessages]);
 
   const showNavbar = !['login', 'register', 'setup2fa', 'forgot', 'reset'].includes(screen);
 
