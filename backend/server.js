@@ -16,12 +16,10 @@ const app = express();
 const server = http.createServer(app);
 
 /* =========================
-   ✅ CORS CONFIG (FINAL FIX)
+   ✅ CORS CONFIG
    ========================= */
 
 const LOCALHOST_ORIGIN = 'http://localhost:3000';
-
-// 🔥 Allow ALL vercel deployments (main + preview)
 const VERCEL_PATTERN = /^https:\/\/.*\.vercel\.app$/;
 
 const normalizeOrigin = (origin = '') =>
@@ -32,17 +30,13 @@ const allowedOrigins = new Set([
 ]);
 
 const isAllowedOrigin = (origin) => {
-  if (!origin) return true; // allow non-browser requests
-
+  if (!origin) return true;
   const normalized = normalizeOrigin(origin);
-
   if (allowedOrigins.has(normalized)) return true;
   if (VERCEL_PATTERN.test(normalized)) return true;
-
   return false;
 };
 
-// ✅ EXPRESS CORS
 app.use(cors({
   origin: (origin, callback) => {
     if (isAllowedOrigin(origin)) {
@@ -60,7 +54,29 @@ app.use(cors({
 app.options('*', cors());
 
 /* =========================
-   ✅ SOCKET.IO CONFIG
+   🔥 IMPORTANT FIX (ADD THIS)
+   ========================= */
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  if (isAllowedOrigin(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
+
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+
+/* =========================
+   ✅ SOCKET.IO
    ========================= */
 
 const io = new Server(server, {
@@ -90,6 +106,7 @@ app.use(express.json({ limit: '10mb' }));
 
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 app.use('/public/images', express.static(path.join(__dirname, 'public/images')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 /* =========================
    ✅ ROUTES
@@ -114,8 +131,7 @@ io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
   socket.on('join-conversation', (userId) => {
-    const room = `chat-${userId}`;
-    socket.join(room);
+    socket.join(`chat-${userId}`);
   });
 
   socket.on('typing', (data) => {
